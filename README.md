@@ -123,3 +123,98 @@
 2. **Gửi lệnh `/start` để bắt đầu và chia sẻ số điện thoại khi được yêu cầu.**
 
 Bot sẽ gọi đến API của bạn với số điện thoại mà người dùng đã chia sẻ và xử lý kết quả như đã định nghĩa trong hàm `confirm`. Đảm bảo rằng bạn đã cung cấp đúng token của bot và endpoint của API trong mã của bạn.
+
+# Bot telegram - nhận chat từ người dùng
+
+Để làm một bot Telegram sử dụng Python để nhận thông tin từ người dùng và gọi đến API của bạn, hãy làm theo các bước sau:
+
+### Bước 1: Chuẩn bị môi trường
+
+1. **Cài đặt Python và các thư viện cần thiết:**
+   - Đảm bảo bạn đã cài đặt Python trên máy tính của mình. Bạn cũng cần cài đặt thư viện `python-telegram-bot` để dễ dàng tạo và quản lý bot Telegram.
+   ```bash
+   pip install python-telegram-bot requests
+   ```
+
+### Bước 2: Tạo bot trên Telegram và lấy token
+
+1. **Liên hệ với BotFather:**
+   - Trong Telegram, tìm kiếm `@BotFather` và bắt đầu một cuộc trò chuyện mới.
+   - Sử dụng lệnh `/newbot` để tạo một bot mới.
+   - BotFather sẽ cung cấp cho bạn một token cho bot của bạn. Hãy sao chép token này.
+
+### Bước 3: Viết mã bot Telegram
+
+1. **Tạo một file Python mới (ví dụ: `bot.py`):**
+
+   ```python
+   from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+   import requests
+   from dotenv import load_dotenv
+   import os
+
+   # Load environment variables
+   load_dotenv()
+
+   # Get your Telegram bot token from environment variables
+   TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+
+   # Define a command handler for the /start command
+   def start(update, context):
+       update.message.reply_text('Xin chào! Gửi cho tôi thông tin bạn muốn tìm kiếm.')
+
+   # Define a handler for normal text messages
+   def echo(update, context):
+       # Get text message from user
+       user_text = update.message.text
+       
+       # Call your API with user_text
+       api_url = 'https://your-api-endpoint.com/search'
+       response = requests.get(api_url, params={'query': user_text})
+       
+       # Process API response
+       if response.status_code == 200:
+           api_response = response.json()
+           # Example: Assuming API returns a 'result' field
+           result = api_response.get('result', 'Không có kết quả.')
+           update.message.reply_text(result)
+       else:
+           update.message.reply_text('Đã xảy ra lỗi khi gọi API.')
+
+   def main():
+       # Create the Updater and pass in the bot's token
+       updater = Updater(TOKEN, use_context=True)
+
+       # Get the dispatcher to register handlers
+       dp = updater.dispatcher
+
+       # Add command handlers
+       dp.add_handler(CommandHandler("start", start))
+
+       # Add a message handler for normal text (not commands)
+       dp.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
+
+       # Start the Bot
+       updater.start_polling()
+
+       # Run the bot until you press Ctrl-C
+       updater.idle()
+
+   if __name__ == '__main__':
+       main()
+   ```
+
+### Bước 4: Triển khai bot của bạn
+
+1. **Triển khai mã bot lên một máy chủ (server) hoặc dịch vụ cloud.**
+2. **Chạy mã bot:**
+   ```bash
+   python bot.py
+   ```
+
+### Bước 5: Kiểm tra bot trên Telegram
+
+1. **Mở Telegram và tìm kiếm tên người dùng của bot bạn đã tạo.**
+2. **Gửi các lệnh và tin nhắn tới bot để kiểm tra xem nó có gọi được API của bạn và xử lý thông tin hay không.**
+
+Đảm bảo bạn cung cấp đúng token của bot và endpoint của API trong mã của bạn. Bạn cũng cần đảm bảo rằng dịch vụ API của bạn đang hoạt động và có thể nhận yêu cầu từ bot của bạn.
