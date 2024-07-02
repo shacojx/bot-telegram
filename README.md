@@ -218,3 +218,59 @@ Bot sẽ gọi đến API của bạn với số điện thoại mà người d�
 2. **Gửi các lệnh và tin nhắn tới bot để kiểm tra xem nó có gọi được API của bạn và xử lý thông tin hay không.**
 
 Đảm bảo bạn cung cấp đúng token của bot và endpoint của API trong mã của bạn. Bạn cũng cần đảm bảo rằng dịch vụ API của bạn đang hoạt động và có thể nhận yêu cầu từ bot của bạn.
+
+# Bot telegram - nhận lệnh từ người dùng
+
+Để làm một bot Telegram gọi đến API của bạn, bạn cần thực hiện các bước sau:
+
+1. **Tạo bot trên Telegram:**
+   - Đầu tiên, bạn cần tạo một bot trên Telegram bằng cách nói chuyện với BotFather (bot quản lý bot trên Telegram). Bạn có thể làm điều này bằng cách tìm kiếm "BotFather" trong ứng dụng Telegram và bắt đầu một cuộc trò chuyện mới.
+
+2. **Lưu token của bot:**
+   - Khi bạn đã tạo bot thành công, BotFather sẽ cung cấp cho bạn một token. Đây là một chuỗi dài, bạn cần lưu token này lại vì bạn sẽ cần nó để xác thực bot của mình với API của Telegram.
+
+3. **Thiết lập máy chủ của bạn:**
+   - Bạn cần có một máy chủ (server) để chạy mã nguồn của bot của bạn. Đây có thể là một server của riêng bạn hoặc một dịch vụ hosting như Heroku, AWS EC2, hoặc nền tảng PaaS khác.
+
+4. **Viết mã bot của bạn:**
+   - Bạn có thể viết mã bot của mình bằng nhiều ngôn ngữ khác nhau, nhưng Python là một lựa chọn phổ biến. Sử dụng một thư viện như python-telegram-bot sẽ giúp bạn dễ dàng kết nối bot với API của Telegram và gọi đến API của bạn.
+   
+   Ví dụ sử dụng `python-telegram-bot`:
+
+   ```python
+   from telegram.ext import Updater, CommandHandler
+   import requests
+
+   # Replace with your Telegram bot token
+   TOKEN = 'your_telegram_bot_token'
+
+   # Define a function to handle the /callapi command
+   def call_api(update, context):
+       # Replace with your API endpoint
+       api_url = 'https://your-api-endpoint.com'
+       response = requests.get(api_url)
+       update.message.reply_text(f'Response from API: {response.text}')
+
+   def main():
+       updater = Updater(TOKEN, use_context=True)
+       dp = updater.dispatcher
+       
+       # Add handler for the /callapi command
+       dp.add_handler(CommandHandler('callapi', call_api))
+       
+       updater.start_polling()
+       updater.idle()
+
+   if __name__ == '__main__':
+       main()
+   ```
+
+   - Trong ví dụ trên, khi bạn gửi lệnh `/callapi` cho bot trên Telegram, bot sẽ gọi đến API của bạn và trả về kết quả từ API đó.
+
+5. **Triển khai bot của bạn:**
+   - Đưa mã của bạn lên máy chủ và chạy nó. Đảm bảo rằng máy chủ của bạn có thể truy cập vào API của bạn (và API của Telegram nếu cần thiết).
+
+6. **Kiểm tra bot của bạn:**
+   - Sau khi triển khai, bạn có thể kiểm tra bot bằng cách gửi các lệnh đã định nghĩa tới nó trên Telegram để xem liệu nó có gọi được API của bạn hay không.
+
+Đảm bảo rằng bạn đã bảo mật token của bot và API endpoint của bạn để tránh bất kỳ vấn đề bảo mật nào.
