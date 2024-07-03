@@ -1,3 +1,89 @@
+# Bot telegram - nhập tên + sdt
+Để tạo một bot Telegram như bạn đã mô tả, bạn cần làm theo các bước sau:
+
+### Bước 1: Tạo bot trên Telegram
+1. **Tìm BotFather**: Bắt đầu với việc tìm BotFather trên Telegram và bắt đầu cuộc trò chuyện mới bằng cách gửi lệnh `/newbot`.
+2. **Tên và Username**: Theo hướng dẫn của BotFather, cung cấp tên cho bot của bạn và sau đó đặt username cho bot của bạn, kết thúc bằng `bot` (ví dụ: `MyAwesomeBot` sẽ có username là `MyAwesomeBot_bot`).
+3. **Token của bot**: BotFather sẽ cung cấp cho bạn một token cho bot của bạn, hãy lưu token này lại vì bạn sẽ cần nó sau này.
+
+### Bước 2: Lập trình bot Telegram
+1. **Sử dụng ngôn ngữ lập trình**: Bạn có thể lựa chọn ngôn ngữ lập trình yêu thích của mình để lập trình bot Telegram. Một lựa chọn phổ biến là sử dụng Python với thư viện `python-telegram-bot`.
+2. **Cài đặt thư viện**: Nếu bạn chọn Python, bạn có thể cài đặt thư viện `python-telegram-bot` bằng cách sử dụng pip:
+   ```
+   pip install python-telegram-bot
+   ```
+3. **Viết mã lệnh**: Dưới đây là một ví dụ đơn giản để bot nhận thông tin tên và số điện thoại từ người dùng và gọi đến một API.
+
+```python
+import requests
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+
+# Thay đổi token này bằng token của bot của bạn
+TOKEN = 'YOUR_BOT_TOKEN'
+
+# Hàm xử lý lệnh /start
+def start(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text('Xin chào! Hãy gửi cho tôi tên của bạn.')
+
+# Hàm xử lý tin nhắn văn bản
+def handle_message(update: Update, context: CallbackContext) -> None:
+    # Lấy nội dung tin nhắn từ người dùng
+    user_message = update.message.text
+
+    # Lưu tên của người dùng vào context
+    context.user_data['name'] = user_message
+
+    # Yêu cầu người dùng gửi số điện thoại
+    update.message.reply_text('Giờ hãy gửi cho tôi số điện thoại của bạn.')
+
+# Hàm xử lý số điện thoại
+def handle_phone(update: Update, context: CallbackContext) -> None:
+    # Lấy số điện thoại từ người dùng
+    phone_number = update.message.contact.phone_number
+
+    # Lấy tên từ context
+    name = context.user_data['name']
+
+    # Gửi thông tin tên và số điện thoại đến API
+    api_url = 'https://example.com/api'
+    data = {'name': name, 'phone': phone_number}
+
+    response = requests.post(api_url, json=data)
+
+    # Kiểm tra kết quả từ API
+    if response.status_code == 200:
+        update.message.reply_text('Đã gửi thông tin thành công!')
+    else:
+        update.message.reply_text('Đã xảy ra lỗi khi gửi thông tin.')
+
+# Hàm main để khởi động bot
+def main() -> None:
+    updater = Updater(TOKEN, use_context=True)
+
+    dispatcher = updater.dispatcher
+
+    # Đăng ký các xử lý sự kiện
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+    dispatcher.add_handler(MessageHandler(Filters.contact, handle_phone))
+
+    # Khởi động bot
+    updater.start_polling()
+
+    # Dừng bot khi nhấn Ctrl-C
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
+```
+
+### Bước 3: Chạy bot
+- Chạy mã lệnh Python của bạn để bắt đầu bot.
+- Bây giờ bot của bạn sẽ lắng nghe các tin nhắn từ người dùng. Khi người dùng bắt đầu bằng lệnh `/start`, bot sẽ yêu cầu người dùng gửi tên và sau đó số điện thoại. Sau khi nhận được số điện thoại, bot sẽ gọi đến API với thông tin này.
+
+Lưu ý: Bạn cần thay đổi `YOUR_BOT_TOKEN` thành token mà BotFather cung cấp cho bạn, và điều chỉnh API endpoint (`api_url`) để phù hợp với API của bạn trong hàm `handle_phone`.
+
 # Bot telegram - share phone
 
 Để cho phép người dùng chia sẻ số điện thoại với bot và sau đó bot gọi đến API để xử lý thông tin này, bạn có thể làm như sau:
