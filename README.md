@@ -1,3 +1,154 @@
+# java
+
+Để xử lý bot Telegram bằng Java, bạn có thể sử dụng thư viện TelegramBots của Telegram API. Dưới đây là hướng dẫn cơ bản để bạn có thể bắt đầu:
+
+### Bước 1: Tạo một bot trên Telegram và lấy API Token
+
+1. Đăng nhập vào Telegram và tìm BotFather.
+2. Theo hướng dẫn để tạo một bot mới và lấy API Token.
+
+### Bước 2: Thiết lập dự án Java và thêm thư viện TelegramBots
+
+1. Tạo một dự án Java mới.
+2. Thêm dependency của TelegramBots vào dự án. Bạn có thể thêm dependency này vào file `pom.xml` nếu bạn đang sử dụng Maven:
+
+```xml
+<dependency>
+    <groupId>org.telegram</groupId>
+    <artifactId>telegrambots</artifactId>
+    <version>5.4.1</version>
+</dependency>
+```
+
+### Bước 3: Viết mã Java để xử lý bot Telegram
+
+Dưới đây là một ví dụ đơn giản về cách viết một bot Telegram bằng Java để nhận tên và số điện thoại từ người dùng và gửi dữ liệu này đến một API.
+
+```java
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Contact;
+import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.meta.generics.BotSession;
+import org.telegram.telegrambots.meta.generics.LongPollingBot;
+import org.telegram.telegrambots.meta.ApiContext;
+import org.telegram.telegrambots.meta.TelegramBotsApi;
+import java.util.HashMap;
+import java.util.Map;
+
+public class MyTelegramBot implements LongPollingBot {
+
+    // Thay đổi token này bằng token của bot của bạn
+    private final String TOKEN = "YOUR_TELEGRAM_BOT_TOKEN";
+
+    // Biến lưu trữ thông tin người dùng
+    private Map<Integer, String> userData = new HashMap<>();
+
+    public static void main(String[] args) {
+        try {
+            TelegramBotsApi telegramBotsApi = new TelegramBotsApi(ApiContext.getInstance());
+            BotSession botSession = telegramBotsApi.registerBot(new MyTelegramBot());
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onUpdateReceived(Update update) {
+        if (update.hasMessage() && update.getMessage().hasText()) {
+            Long chatId = update.getMessage().getChatId();
+            String messageText = update.getMessage().getText();
+
+            if (messageText.equals("/start")) {
+                sendTextMessage(chatId, "Xin chào! Hãy gửi cho tôi tên của bạn.");
+            } else if (!userData.containsKey(chatId.intValue())) {
+                // Lưu tên của người dùng vào userData
+                userData.put(chatId.intValue(), messageText);
+                sendTextMessage(chatId, "Giờ hãy gửi cho tôi số điện thoại của bạn.");
+            } else {
+                // Xử lý số điện thoại
+                String name = userData.get(chatId.intValue());
+                String phone = update.getMessage().getContact().getPhoneNumber();
+
+                // Gửi thông tin tên và số điện thoại đến API
+                String apiUrl = "http://localhost:8080/api/user"; // Thay đổi địa chỉ API của bạn
+                Map<String, String> postData = new HashMap<>();
+                postData.put("name", name);
+                postData.put("phone", phone);
+                sendPostRequest(apiUrl, postData);
+
+                // Phản hồi lại người dùng
+                sendTextMessage(chatId, "Đã gửi thông tin thành công đến API Java!");
+            }
+        }
+    }
+
+    @Override
+    public String getBotUsername() {
+        return "YourBotName";
+    }
+
+    @Override
+    public String getBotToken() {
+        return TOKEN;
+    }
+
+    private void sendTextMessage(Long chatId, String text) {
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId.toString());
+        message.setText(text);
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendPostRequest(String apiUrl, Map<String, String> postData) {
+        // Viết mã để gửi POST request đến API ở đây
+        // Bạn có thể sử dụng thư viện Java như HttpURLConnection hoặc HttpClient
+        // để gửi POST request đến API
+    }
+}
+```
+
+### Giải thích mã:
+
+- `MyTelegramBot` là lớp chính triển khai `LongPollingBot`, một interface của thư viện TelegramBots để xử lý bot dựa trên cơ chế long polling.
+- Trong phương thức `onUpdateReceived`, bot xử lý các tin nhắn từ người dùng. Nó nhận tên từ người dùng khi nhận tin nhắn `/start`, sau đó lưu số điện thoại khi người dùng gửi contact.
+- Khi có đủ thông tin (tên và số điện thoại), bot gửi POST request đến API Java để lưu thông tin người dùng.
+- `sendTextMessage` dùng để gửi tin nhắn văn bản đến người dùng.
+- `sendPostRequest` sẽ là nơi bạn viết mã để gửi POST request đến API Java (ở phần cuối của mã).
+
+### Bước 4: Viết và triển khai API Java
+
+- Viết một API đơn giản trong Java để nhận các request POST từ bot Telegram và xử lý dữ liệu.
+- Bạn có thể sử dụng Spring Boot hoặc một framework Java khác để xây dựng API này.
+
+```java
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class UserController {
+
+    @PostMapping("/api/user")
+    public String createUser(@RequestBody UserRequest userRequest) {
+        // Xử lý dữ liệu userRequest gửi từ bot Telegram
+        System.out.println("Received user data: " + userRequest.getName() + ", " + userRequest.getPhone());
+        
+        // Trả về response
+        return "Received user data successfully!";
+    }
+}
+```
+
+### Lưu ý:
+
+- Để triển khai API Java, bạn cần một môi trường phát triển (ví dụ: IntelliJ IDEA, Eclipse) và cài đặt Maven hoặc Gradle để quản lý dependencies.
+- Hãy chắc chắn rằng bot Telegram và API Java của bạn đều được triển khai trên các môi trường có bảo mật, và luôn luôn kiểm tra và xử lý dữ liệu người dùng một cách an toàn.
+
 # Bot telegram - nhập tên + sdt
 Để tạo một bot Telegram như bạn đã mô tả, bạn cần làm theo các bước sau:
 
